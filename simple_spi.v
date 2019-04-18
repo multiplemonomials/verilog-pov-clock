@@ -39,8 +39,10 @@ module simple_spi_m_bit_rw
 	reg [25:0] divclk;
 	
 	always @(posedge module_clk, posedge rst) 	
-		begin							
+		begin : clock_divider_block							
 			if (rst)
+				divclk <= 0;
+			else if(divclk == clock_divider)
 				divclk <= 0;
 			else
 				divclk <= divclk + 1'b1;
@@ -51,7 +53,7 @@ module simple_spi_m_bit_rw
 	begin
 		if (rst)
       begin
-        state = idle;
+        state <= idle;
         cs <= 1;
         d_out <= 0;
         transmit_done <= 0;
@@ -63,7 +65,7 @@ module simple_spi_m_bit_rw
 			case (state)
 				idle:
 				begin
-          bus_clk = 0;
+          bus_clk <= 0;
           count <= reg_width;
           cs <= 0;
           transmit_done <= 0;
@@ -83,14 +85,13 @@ module simple_spi_m_bit_rw
         begin
           if(divclk == clock_divider)
           begin
-            divclk <= 0;
             bus_clk <= !bus_clk;
             
             if(bus_clk == 1'b1)
             begin
             
               // shift in next bit on falling edge
-              count <= count - 1;
+              count <= count - 2'd1;
               mosi_d <= {mosi_d[reg_width-2:0], 1'b0};
 
             end
@@ -118,7 +119,7 @@ module simple_spi_m_bit_rw
 	// begin SPI logic
 
 	assign mosi = ( ~cs ) ? mosi_d[reg_width-1] : 1'bz;
-	assign spi_clk = ( state == transact ) ? bus_clk : 1'b0;
+	assign spi_clk = bus_clk;//( state == transact ) ? bus_clk : 1'b0;
 
 	// end SPI logic
 

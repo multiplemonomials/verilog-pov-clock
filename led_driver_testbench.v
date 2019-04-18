@@ -29,6 +29,23 @@ module led_driver_testbench;
 	reg [7:0] led_r[7:0];
 	reg [7:0] led_g[7:0];
 	reg [7:0] led_b[7:0];
+  
+  //------------
+	// generate vectors to be passed as parameters
+	
+	reg [63:0] led_r_vector;
+	reg [63:0] led_g_vector;
+	reg [63:0] led_b_vector;
+
+	integer index;
+	always @* begin 
+	  for(index=0; index <= 7; index = index + 1)
+			begin
+				led_r_vector[index*8 +: 8] <= led_r[index];
+				led_g_vector[index*8 +: 8] <= led_g[index];
+				led_b_vector[index*8 +: 8] <= led_b[index];
+			end
+	end
 	
 	reg write_data;
 	
@@ -52,9 +69,9 @@ module led_driver_testbench;
 	// Instantiate the Unit Under Test (UUT)
 	led_driver uut (
 		.rst(rst), 
-		.led_r(led_r),
-		.led_g(led_g),
-		.led_b(led_b),
+		.led_r_vector(led_r_vector),
+		.led_g_vector(led_g_vector),
+		.led_b_vector(led_b_vector),
 		.sys_clk(Clk),
 		.mosi(mosi),
 		.sclk(sclk),

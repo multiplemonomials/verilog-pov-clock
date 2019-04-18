@@ -25,9 +25,9 @@
 module led_driver(
 
 		input wire rst,
-		input wire [7:0] led_r [`NUM_LEDS-1:0],
-		input wire [7:0] led_g [`NUM_LEDS-1:0],
-		input wire [7:0] led_b [`NUM_LEDS-1:0],
+		input wire [(`NUM_LEDS)*8 - 1:0] led_r_vector,
+		input wire [(`NUM_LEDS)*8 - 1:0] led_g_vector,
+		input wire [(`NUM_LEDS)*8 - 1:0] led_b_vector,
 		input wire sys_clk,
 		input wire write_data,
 
@@ -35,6 +35,26 @@ module led_driver(
 		output wire mosi,
 		output wire sclk
     );
+	 
+	// Sadly ISE doesn't support SystemVerilog, so while we have arrays, they can't be passed as parameters.
+	// So, we unpack led_r vector into an array
+	// from here: https://stackoverflow.com/questions/40223975/convert-vector-into-array
+	
+	reg [7:0] led_r [`NUM_LEDS-1:0];
+	reg [7:0] led_g [`NUM_LEDS-1:0];
+	reg [7:0] led_b [`NUM_LEDS-1:0];
+
+	integer index;
+	always @* begin // Verilog-2001 style sensitivity list
+	  for(index=0; index < `NUM_LEDS; index = index + 1)
+			begin
+				led_r[index] <= led_r_vector[index*8 +: 8];
+				led_g[index] <= led_g_vector[index*8 +: 8];
+				led_b[index] <= led_b_vector[index*8 +: 8];
+
+			end 
+	end
+
 
 	// instantiate SPI module
 	wire spi_done;
@@ -46,7 +66,7 @@ module led_driver(
 		.reg_width(32)
 	) spi
 	(
-  	.module_clk(sys_clk),
+		.module_clk(sys_clk),
 		.t_start(spi_trigger),
 		.d_in(spi_data_word),
 		.d_out(),

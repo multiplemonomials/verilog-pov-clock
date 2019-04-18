@@ -24,13 +24,13 @@ module pov
 	BtnL, BtnU, BtnD, BtnR,            // the Left, Up, Down, and the Right buttons BtnL, BtnR,
 	BtnC,                              // the center button (this is our reset in most of our designs)
 	Sw7, Sw6, Sw5, Sw4, Sw3, Sw2, Sw1, Sw0, // 8 switches
-	Ld7, Ld6, Ld5, Ld4, Ld3, Ld2, Ld1, Ld0, // 8 LEDs
+	/*Ld7, Ld6, Ld5, Ld4, Ld3, Ld2, Ld1, Ld0, // 8 LEDs
 	An3, An2, An1, An0,			       // 4 anodes
 	Ca, Cb, Cc, Cd, Ce, Cf, Cg,        // 7 cathodes
-	Dp,                                 // Dot Point Cathode on SSDs
-	JA0, // SPI MOSI
-	JA1, // SPI SCLK
-	JA2, // Encoder index input
+	Dp,       */                          // Dot Point Cathode on SSDs
+	JA1, // SPI MOSI
+	JA2, // SPI SCLK
+	JA3, // Encoder index input
 	JA4  // Motor PWM output
 	);
 
@@ -47,18 +47,22 @@ module pov
 	output 	MemOE, MemWR, RamCS, FlashCS, QuadSpiFlashCS;
 	// Project Specific Outputs
 	// LEDs
-	output 	Ld0, Ld1, Ld2, Ld3, Ld4, Ld5, Ld6, Ld7;
+	/*output 	Ld0, Ld1, Ld2, Ld3, Ld4, Ld5, Ld6, Ld7;
 	// SSD Outputs
 	output 	Cg, Cf, Ce, Cd, Cc, Cb, Ca, Dp;
-	output 	An0, An1, An2, An3;	
+	output 	An0, An1, An2, An3;	*/
 	
 	// SPI
-	output wire JA0, JA1;
+	output wire JA1, JA2, JA3, JA4;
 
 	
 	/*  LOCAL SIGNALS */
 	
 	reg write_data;
+	
+	reg [7:0] led_r[7:0];
+	reg [7:0] led_g[7:0];
+	reg [7:0] led_b[7:0];
 	
 	//------------	
 	// Disable the three memories so that they do not interfere with the rest of the design.
@@ -76,15 +80,33 @@ module pov
 	BUFGP BUFGP1 (board_clk, ClkPort); 	
 	
 	//------------
+	// generate vectors to be passed as parameters
+	
+	reg [63:0] led_r_vector;
+	reg [63:0] led_g_vector;
+	reg [63:0] led_b_vector;
+
+	integer index;
+	always @* begin 
+	  for(index=0; index <= 7; index = index + 1)
+			begin
+				led_r_vector[index*8 +: 8] <= led_r[index];
+				led_g_vector[index*8 +: 8] <= led_g[index];
+				led_b_vector[index*8 +: 8] <= led_b[index];
+			end
+	end
+	
+	//------------
 	// declare LED driver
+		
 	led_driver led_driver (
 		.rst(Reset), 
-		.led_r(led_r),
-		.led_g(led_g),
-		.led_b(led_b),
+		.led_r_vector(led_r_vector),
+		.led_g_vector(led_g_vector),
+		.led_b_vector(led_b_vector),
 		.sys_clk(board_clk),
-		.mosi(JA0),
-		.sclk(JA1),
+		.mosi(JA3),
+		.sclk(JA2),
 		.write_data(write_data)
 	);
 	
@@ -92,7 +114,7 @@ module pov
 	// clock divider
 	reg [25:0] divclk;
 	
-	always @(posedge sys_clk, posedge Reset) 	
+	always @(posedge board_clk, posedge Reset) 	
 		begin							
 			if (Reset)
 				divclk <= 0;
@@ -101,8 +123,75 @@ module pov
 		end
 		
 	//------------
+	// Generate PWM for motor controller
+	assign JA1 = ~(divclk[16] && divclk[17]);
+		
+	//------------
 	// Triggering logic
 	// FOR NOW: just trigger at 100Hz
-	assign write_data = divclk[10]; // clock divide by 2^10 = 1024
+	//assign write_data = divclk[10]; // clock divide by 2^10 = 1024
+	
+	assign JA4 = 1'b1;
+	
+	initial
+	begin
+		led_r[0] = 8'h00;
+		led_g[0] = 8'h00;
+		led_b[0] = 8'h40;
+    
+		led_r[1] = 8'h20;
+		led_g[1] = 8'h00;
+		led_b[1] = 8'h40;
+    	
+		led_r[2] = 8'h40;
+		led_g[2] = 8'h00;
+		led_b[2] = 8'h20;
+    
+		led_r[3] = 8'h40;
+		led_g[3] = 8'h00;
+		led_b[3] = 8'h00;
+    
+		led_r[4] = 8'h40;
+		led_g[4] = 8'h20;
+		led_b[4] = 8'h00;
+    
+		led_r[5] = 8'h20;
+		led_g[5] = 8'h40;
+		led_b[5] = 8'h00;
+    
+		led_r[6] = 8'h00;
+		led_g[6] = 8'h40;
+		led_b[6] = 8'h00;
+    
+		led_r[7] = 8'h00;
+		led_g[7] = 8'h20;
+		led_b[7] = 8'h40;
+        
+		write_data = 1'b1;
+			
 
+		
+	end
+
+	always @(posedge divclk[21])
+		begin: RAINBOW
+			reg [7:0] temp_r;
+			reg [7:0] temp_g;
+			reg [7:0] temp_b;
+
+			temp_r = led_r[7];
+			temp_g = led_g[7];
+			temp_b = led_b[7];
+
+			for(index=0; index < 7; index = index + 1)
+			begin
+				led_r[index + 1] <= led_r[index];
+				led_g[index + 1] <= led_g[index];
+				led_b[index + 1] <= led_b[index];
+			end
+			
+			led_r[0] <= temp_r;
+			led_g[0] <= temp_g;
+			led_b[0] <= temp_b;
+		end
 endmodule
