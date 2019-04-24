@@ -112,19 +112,30 @@ module pov
 		.led_g_vector(led_g_vector),
 		.led_b_vector(led_b_vector),
 		.sys_clk(board_clk),
-		.mosi(JA3),
+		.mosi(JA1),
 		.sclk(JA2),
 		.write_data(write_data)
 	);
 	
 	//------------
 	// declare time counter
+	
+	wire [4:0] hours_tens;
+	wire [4:0] hours_ones;
+	wire [4:0] minutes_tens;
+	wire [4:0] minutes_ones;
+	wire [4:0] seconds_tens;
+	wire [4:0] seconds_ones;	
+	
 	time_counter time_counter (
 		.rst(Reset),
 		.sys_clk(board_clk),
-		.curr_hours(curr_hours),
-		.curr_minutes(curr_minutes),
-		.curr_seconds(curr_seconds)
+		.hours_tens(hours_tens),
+		.hours_ones(hours_ones),
+		.minutes_tens(minutes_tens),
+		.minutes_ones(minutes_ones),
+		.seconds_tens(seconds_tens),
+		.seconds_ones(seconds_ones)
 	);
 	
 	//------------
@@ -145,14 +156,13 @@ module pov
 		
 	//------------
 	// Generate PWM for motor controller
-	assign JA1 = ~(divclk[16] && divclk[17]);
+	assign JA4 = ~(divclk[16] && divclk[17]);
 		
 	//------------
 	// Triggering logic
 	// FOR NOW: just trigger at 100Hz
 	//assign write_data = divclk[10]; // clock divide by 2^10 = 1024
 	
-	assign JA4 = 1'b1;
 	/*
 	
 	initial
@@ -228,22 +238,16 @@ module pov
 	`define COL_B 8'h40;
 
 
-	wire [4:0] hours_tens;
-	wire [4:0] hours_ones;
-	wire [4:0] minutes_tens;
-	wire [4:0] minutes_ones;
-	wire [4:0] seconds_tens;
-	wire [4:0] seconds_ones;
-
 	wire display_trigger;
 	
 	// TEMPORARY
+	/*
 	assign hours_tens = 4'd0;
 	assign hours_ones = 4'd1;
 	assign minutes_tens = 4'd2;
 	assign minutes_ones = 4'd3;
 	assign seconds_tens = 4'd4;
-	assign seconds_ones = 4'd5;
+	assign seconds_ones = 4'd5;*/
 	
 	// trigger when the encoder reads the magnet
 	assign display_trigger = ~JA3;
