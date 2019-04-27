@@ -8,7 +8,7 @@
 module simple_spi_m_bit_rw
 #(
 	parameter reg_width = 8,
-  parameter clock_divider = 16
+  parameter clock_divider = 32
 )
 (
 	// System side

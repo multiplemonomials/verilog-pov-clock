@@ -144,7 +144,7 @@ module pov
 	
 	
 	// pixel timing
-	`define CLOCKS_PER_PIXEL 27'd500000 - 1
+	`define CLOCKS_PER_PIXEL 27'd100000 - 1
 	
 	always @(posedge board_clk, posedge Reset) 	
 		begin							
@@ -229,13 +229,13 @@ module pov
 		*/
 		
 	// spacing in pixels
-	`define FRONT_PADDING 4'd10
+	`define FRONT_PADDING 5'd31
 	`define DIGIT_PADDING 4'd2
 	
 	// color of digits
-	`define COL_R 8'h20;
+	`define COL_R 8'h40;
 	`define COL_G 8'h0;
-	`define COL_B 8'h40;
+	`define COL_B 8'h80;
 
 
 	wire display_trigger;
@@ -285,11 +285,13 @@ module pov
 			case(state)
 				WAIT:
 					begin
+						write_data <= 1'b0;
 						if(display_trigger)
 							begin
 								pixel_counter <= 4'b0;
 								digit_counter <= 3'b0;
 								state <= RIGHT_PAD;
+								write_data <= 1'b1;
 							end
 					end
 				RIGHT_PAD:

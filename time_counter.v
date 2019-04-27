@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 // when clk counts up to here, 1 second has passed
-`define 1_SEC_CLK_COUNT 27'd10000 -1 //27'd100000000 -1
+`define 1_SEC_CLK_COUNT 27'd100000000 -1
 
 module time_counter(
 	output reg [4:0] hours_tens,
